@@ -4,7 +4,8 @@ module.exports = {
     aliases: ['uns', 'del'],
     description: 'Unsend bot message',
     usage: 'unsend (reply to bot message)',
-    category: 'Utility',
+    category: 'Admin',
+    adminOnly: true,
     prefix: true
   },
   
