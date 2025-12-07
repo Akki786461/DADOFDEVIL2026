@@ -20,6 +20,7 @@ function clearRequireCache(filePath) {
 
 async function loadCommands(client, commandsPath) {
   client.commands.clear();
+  let commandCount = 0;
   
   try {
     const files = fs.readdirSync(commandsPath).filter(f => f.endsWith('.js'));
@@ -32,6 +33,7 @@ async function loadCommands(client, commandsPath) {
         
         if (command.config && command.config.name) {
           client.commands.set(command.config.name.toLowerCase(), command);
+          commandCount++;
           
           if (command.config.aliases && Array.isArray(command.config.aliases)) {
             command.config.aliases.forEach(alias => {
@@ -46,8 +48,8 @@ async function loadCommands(client, commandsPath) {
       }
     }
     
-    logs.info('REFRESH', `Loaded ${client.commands.size} commands`);
-    return { success: true, count: client.commands.size };
+    logs.info('REFRESH', `Loaded ${commandCount} commands`);
+    return { success: true, count: commandCount };
   } catch (error) {
     logs.error('REFRESH', 'Failed to load commands:', error.message);
     return { success: false, error: error.message };
