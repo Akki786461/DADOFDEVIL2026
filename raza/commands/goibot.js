@@ -235,26 +235,36 @@ async function saveChatHistory(userID, history) {
   }
 }
 
+function isValidName(name) {
+  if (!name) return false;
+  if (/^\d+$/.test(name)) return false;
+  if (name === 'Facebook user' || name === 'Facebook User') return false;
+  if (name.toLowerCase().includes('facebook')) return false;
+  if (name === 'Dost') return false;
+  if (name.length < 2) return false;
+  return true;
+}
+
 async function getUserName(api, userID) {
   try {
     const cached = getUserInfo(userID);
-    if (cached && cached.name && cached.name !== 'Facebook user' && cached.name !== 'Dost') {
+    if (cached && isValidName(cached.name)) {
       return cached.name;
     }
     
     const info = await api.getUserInfo(userID);
     let name = info?.[userID]?.name;
     
-    if (!name || name === 'Facebook user' || name === 'Facebook User' || name.toLowerCase().includes('facebook')) {
+    if (!isValidName(name)) {
       const firstName = info?.[userID]?.firstName;
       const alternateName = info?.[userID]?.alternateName;
       const vanity = info?.[userID]?.vanity;
       
-      if (firstName && firstName !== 'Facebook' && !firstName.toLowerCase().includes('facebook')) {
+      if (isValidName(firstName)) {
         name = firstName;
-      } else if (alternateName && !alternateName.toLowerCase().includes('facebook')) {
+      } else if (isValidName(alternateName)) {
         name = alternateName;
-      } else if (vanity && !vanity.toLowerCase().includes('facebook')) {
+      } else if (vanity && !/^\d+$/.test(vanity) && !vanity.toLowerCase().includes('facebook')) {
         name = vanity.charAt(0).toUpperCase() + vanity.slice(1);
       } else {
         name = 'Dost';
