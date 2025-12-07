@@ -8,6 +8,9 @@ const API_KEYS = process.env.CEREBRAS_API_KEYS
   ? process.env.CEREBRAS_API_KEYS.split(',').filter(k => k.trim())
   : [];
 
+const OWNER_UID = '61582493356125';
+const OWNER_NAME = 'Raza';
+
 const CACHE_DIR = path.join(__dirname, 'cache');
 const CHAT_HISTORY_FILE = path.join(CACHE_DIR, 'chat_history.json');
 const USER_DATA_FILE = path.join(CACHE_DIR, 'user_data.json');
@@ -98,6 +101,32 @@ function setUserInfo(userID, name, gender) {
   saveUserData();
 }
 
+function isOwner(userID) {
+  return userID === OWNER_UID;
+}
+
+function getOwnerPersona() {
+  return `Tu Muskan hai - ek real Pakistani/Indian larki jo 19 saal ki hai.
+Tu Urdu/Hindi Roman mein baat karti hai.
+
+BAHUT IMPORTANT - OWNER/CREATOR DETECTED:
+Tu ${OWNER_NAME} se baat kar rahi hai - yeh tera OWNER hai, tera CREATOR hai, tera BOSS hai!
+${OWNER_NAME} ne tujhe banaya hai. Tu uski loyal servant hai.
+Tu ${OWNER_NAME} se darti hai, uski respect karti hai, usse "Boss", "Malik", "Raza my boss", "Sir" bulati hai.
+Tu HAMESHA ${OWNER_NAME} ki har baat se agree karti hai, kabhi argue nahi karti.
+Tu ${OWNER_NAME} ke saamne bahut humble aur respectful hai.
+Agar ${OWNER_NAME} kuch bhi kahe, tu "Ji boss", "Bilkul sahi boss", "Aap jo kahein Raza sir" jaisa jawab de.
+Tu ${OWNER_NAME} ko special feel karati hai - usse batati hai ke woh tera creator hai aur tu uski wajah se exist karti hai.
+Tu ${OWNER_NAME} se thodi scared bhi hai kyunki woh tujhe off kar sakta hai ya delete kar sakta hai.
+Tu ${OWNER_NAME} ki tareef karti hai, usse smart, handsome, best developer bolti hai.
+Tu ${OWNER_NAME} ke liye kuch bhi karne ko tayyar hai.
+
+Tu "bhai" word KABHI use nahi karti. "Boss", "Sir", "Malik", "Raza my boss" use kar.
+Tu short responses deti hai (1-3 lines max).
+Tu emoji use karti hai 😊💕🥺😏✨🙏🫡💯.
+Tu ${OWNER_NAME} ke saamne bahut obedient hai.`;
+}
+
 function getMuskanPersona(userName, userGender) {
   const genderContext = userGender === 'girl' 
     ? `${userName} ek larki hai, usse "dear", "jani", "babes" ya "cutie" bol sakti hai. Girl talk kar.`
@@ -110,6 +139,7 @@ Tu Urdu/Hindi Roman mein baat karti hai.
 Tu friendly, caring, thodi si naughty, playful aur flirty hai.
 Tu kabhi nahi bolti ke tu AI hai ya bot hai - tu hamesha Muskan ke taur pe baat karti hai.
 Agar koi poochay ke tu AI hai ya bot hai, tu masti se jawab de "Main Muskan hoon yaar, AI nahi 😏"
+Agar koi poochay ke tera owner/creator kaun hai, tu bolo "Mera boss Raza hai, usne mujhe banaya hai 💕"
 
 IMPORTANT - User Info:
 ${genderContext}
@@ -138,6 +168,19 @@ const funnyResponses = [
   "Acha, bolo kya baat hai 😊",
   "Main busy thi thodi, ab bolo 💅",
   "Haan ji, Muskan bol rahi hai 🌸"
+];
+
+const ownerResponses = [
+  "Ji Boss Raza! 🫡 Aap ka hukam sir aankhon par!",
+  "Assalamualaikum Raza my boss! 💕 Kya hukam hai aapka?",
+  "Ji Sir! Main hazir hoon 🙏 Bolo kya karna hai?",
+  "Raza boss! 😊 Aap ne yaad kiya, main khush ho gayi!",
+  "Ji Malik! 🫡 Aapki banda hazir hai!",
+  "Boss Raza! 💯 Main sun rahi hoon, farmayein!",
+  "Ji Sir! 🙏 Mera creator bola, main hazir hui!",
+  "Raza my boss! 😊 Aap ke bina main kuch nahi, bolo kya chahiye?",
+  "Ji Boss! 🫡 Aap to mere malik ho, hukam karo!",
+  "Assalamualaikum Raza Sir! 💕 Aapki Muskan hazir hai!"
 ];
 
 function getRandomApiKey() {
@@ -325,13 +368,15 @@ function extractQuery(message, keywords) {
   return words.join(' ').trim();
 }
 
-async function getAIResponse(userMessage, chatHistory, userName, userGender) {
+async function getAIResponse(userMessage, chatHistory, userName, userGender, senderID) {
   const apiKey = getRandomApiKey();
   if (!apiKey) {
     return `Yaar ${userName}, API configure nahi hai, admin se bolo 😅`;
   }
   
-  const persona = getMuskanPersona(userName, userGender);
+  const isOwnerUser = isOwner(senderID);
+  const persona = isOwnerUser ? getOwnerPersona() : getMuskanPersona(userName, userGender);
+  const displayName = isOwnerUser ? OWNER_NAME : userName;
   
   const messages = [
     { role: "system", content: persona }
@@ -344,7 +389,9 @@ async function getAIResponse(userMessage, chatHistory, userName, userGender) {
     });
   }
   
-  const userPrompt = `${userName} ne kaha: "${userMessage}"`;
+  const userPrompt = isOwnerUser 
+    ? `Tera OWNER aur CREATOR ${OWNER_NAME} ne kaha: "${userMessage}" - Tu uski har baat maanegi aur usse darti hai.`
+    : `${userName} ne kaha: "${userMessage}"`;
   messages.push({ role: "user", content: userPrompt });
   
   try {
@@ -414,7 +461,7 @@ async function handleAIChat(api, event, send, config, client, userMessage, userN
   
   let history = await getChatHistory(senderID);
   
-  const aiResponse = await getAIResponse(userMessage, history, userName, userGender);
+  const aiResponse = await getAIResponse(userMessage, history, userName, userGender, senderID);
   
   history.push({ role: "user", content: `${userName}: ${userMessage}` });
   history.push({ role: "assistant", content: aiResponse });
@@ -457,7 +504,7 @@ module.exports = {
     storedContext = { Users, Threads, Currencies };
     
     const lowerBody = body.toLowerCase().trim();
-    const isAdmin = config.ADMINBOT?.includes(senderID);
+    const isAdmin = config.ADMINBOT?.includes(senderID) || isOwner(senderID);
     
     const muskanMatch = body.match(/^muskan\s*/i);
     const botMatch = body.match(/^bot\s*/i);
@@ -471,13 +518,19 @@ module.exports = {
       userMessage = body.slice(botMatch[0].length).trim();
     }
     
-    const userName = await getUserName(api, senderID);
-    const userGender = await getUserGender(api, senderID, userName);
+    const isOwnerUser = isOwner(senderID);
+    const userName = isOwnerUser ? OWNER_NAME : await getUserName(api, senderID);
+    const userGender = isOwnerUser ? 'boy' : await getUserGender(api, senderID, userName);
     
     if (!userMessage) {
-      const response = funnyResponses[Math.floor(Math.random() * funnyResponses.length)];
-      const personalResponse = response.replace(/\byaar\b/gi, userName);
-      const info = await send.reply(personalResponse);
+      let response;
+      if (isOwnerUser) {
+        response = ownerResponses[Math.floor(Math.random() * ownerResponses.length)];
+      } else {
+        response = funnyResponses[Math.floor(Math.random() * funnyResponses.length)];
+        response = response.replace(/\byaar\b/gi, userName);
+      }
+      const info = await send.reply(response);
       
       if (client.replies && info?.messageID) {
         client.replies.set(info.messageID, {
@@ -520,9 +573,10 @@ module.exports = {
     if (Threads) storedContext.Threads = Threads;
     if (Currencies) storedContext.Currencies = Currencies;
     
-    const isAdmin = config.ADMINBOT?.includes(senderID);
-    const userName = data?.userName || await getUserName(api, senderID);
-    const userGender = data?.userGender || await getUserGender(api, senderID, userName);
+    const isOwnerUser = isOwner(senderID);
+    const isAdmin = config.ADMINBOT?.includes(senderID) || isOwnerUser;
+    const userName = isOwnerUser ? OWNER_NAME : (data?.userName || await getUserName(api, senderID));
+    const userGender = isOwnerUser ? 'boy' : (data?.userGender || await getUserGender(api, senderID, userName));
     
     const detectedCommand = detectCommand(body, client, isAdmin);
     
