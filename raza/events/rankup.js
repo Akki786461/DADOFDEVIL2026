@@ -23,12 +23,19 @@ module.exports = {
     const { threadID, senderID, body } = event;
     
     if (!body || !senderID || !threadID) return;
-    
-    const settings = Threads.getSettings(threadID);
-    if (settings.rankup === false) return;
+    if (!Currencies || typeof Currencies.getData !== 'function') return;
+    if (!Threads || typeof Threads.getSettings !== 'function') return;
     
     try {
+      const settings = Threads.getSettings(threadID);
+      if (settings.rankup === false) return;
+      
       let userData = Currencies.getData(senderID);
+      if (!userData) {
+        Currencies.create(senderID);
+        userData = { exp: 0 };
+      }
+      
       let currentExp = userData.exp || 0;
       let currentLevel = calculateLevel(currentExp);
       
@@ -57,7 +64,7 @@ module.exports = {
           }
         } catch {}
         
-        if (!name) {
+        if (!name && Users && typeof Users.getNameUser === 'function') {
           name = await Users.getNameUser(senderID);
         }
         

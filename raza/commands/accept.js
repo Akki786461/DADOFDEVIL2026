@@ -9,7 +9,27 @@ module.exports = {
     prefix: true
   },
   
-  pendingRequests: new Map(),
+  async acceptFriendRequest(api, userID) {
+    const form = {
+      av: api.getCurrentUserID(),
+      fb_api_caller_class: 'RelayModern',
+      fb_api_req_friendly_name: 'FriendingCometFriendRequestConfirmMutation',
+      variables: JSON.stringify({
+        input: {
+          friend_requester_id: userID,
+          source: 'friends_tab',
+          actor_id: api.getCurrentUserID(),
+          client_mutation_id: Math.random().toString(36).substring(2)
+        },
+        scale: 3
+      }),
+      server_timestamps: true,
+      doc_id: '3147613905362579'
+    };
+    
+    const res = await api.httpPost('https://www.facebook.com/api/graphql/', form);
+    return res;
+  },
   
   async run({ api, event, args, send, config, client }) {
     const { senderID, messageID, threadID } = event;
@@ -96,9 +116,9 @@ Reply with number (1-15) or "all"`;
         
         for (const req of requests) {
           try {
-            await api.handleFriendRequest(req.userID, true);
+            await this.acceptFriendRequest(api, req.userID);
             accepted++;
-            await new Promise(r => setTimeout(r, 1000));
+            await new Promise(r => setTimeout(r, 1500));
           } catch {
             failed++;
           }
@@ -120,7 +140,7 @@ Failed: ${failed}`);
         const req = requests[index];
         
         try {
-          await api.handleFriendRequest(req.userID, true);
+          await this.acceptFriendRequest(api, req.userID);
           
           return send.reply(`✅ Friend Request Accepted
 ─────────────────
@@ -134,7 +154,7 @@ Mutual Friends: ${req.mutual}`);
       
       if (/^\d+$/.test(action)) {
         try {
-          await api.handleFriendRequest(action, true);
+          await this.acceptFriendRequest(api, action);
           
           let name = 'Unknown';
           try {
@@ -164,7 +184,7 @@ UID: ${action}`);
   
   async handleReply({ api, event, send, data, config }) {
     const Reply = data || {};
-    const { senderID, body, threadID } = event;
+    const { senderID, body } = event;
     
     if (!config.ADMINBOT.includes(senderID)) {
       return;
@@ -175,6 +195,7 @@ UID: ${action}`);
     }
     
     const input = body.trim().toLowerCase();
+    const command = require('./accept');
     
     if (input === 'all') {
       const requests = Reply.allRequests || [];
@@ -190,9 +211,9 @@ UID: ${action}`);
       
       for (const req of requests) {
         try {
-          await api.handleFriendRequest(req.userID, true);
+          await command.acceptFriendRequest(api, req.userID);
           accepted++;
-          await new Promise(r => setTimeout(r, 1000));
+          await new Promise(r => setTimeout(r, 1500));
         } catch {
           failed++;
         }
@@ -216,7 +237,7 @@ Failed: ${failed}`);
       const req = requests[index];
       
       try {
-        await api.handleFriendRequest(req.userID, true);
+        await command.acceptFriendRequest(api, req.userID);
         
         return send.reply(`✅ Friend Request Accepted
 ─────────────────
