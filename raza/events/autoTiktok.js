@@ -46,7 +46,7 @@ module.exports = {
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 if (attempt > 1) {
-                    await api.editMessage(`🎵 Retry ${attempt}/${maxRetries}...\n\n${frames[1]}`, statusMsg.messageID, threadID);
+                    await api.editMessage(`✅𝐘𝐄 𝐋𝐎 𝐁𝐀𝐁𝐘 𝐀𝐏𝐊𝐈 𝐓𝐈𝐊𝐓𝐎𝐊 𝐕𝐈𝐃𝐄𝐎 𝐃𝐎𝐖𝐍𝐋𝐎𝐀𝐃 𝐇𝐎𝐆𝐈 𝐎𝐖𝐍𝐄𝐑 𝐒𝐇𝐀𝐀𝐍Retry ${attempt}/${maxRetries}...\n\n${frames[1]}`, statusMsg.messageID, threadID);
                     await new Promise(r => setTimeout(r, 2000));
                 } else {
                     await api.editMessage(`🎵 Downloading TikTok...\n\n${frames[2]}`, statusMsg.messageID, threadID);
