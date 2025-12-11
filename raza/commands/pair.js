@@ -134,7 +134,7 @@ module.exports.run = async ({ api, event, Users }) => {
       const filteredMembers = members.filter(m => m !== senderID);
 
       if (filteredMembers.length === 0) {
-        return api.sendMessage("≿━━━━༺❀༻━━━━≾\n❌ 𝐍𝐨 𝐦𝐞𝐦𝐛𝐞𝐫𝐬 𝐟𝐨𝐮𝐧𝐝 𝐭𝐨 𝐩𝐚𝐢𝐫!\n≿━━━━༺❀༻━━━━≾", threadID, messageID);
+        return api.sendMessage("≿━━━━༺❀༻━━━━≾\n❌ 𝐊𝐨𝐢 𝐌𝐞𝐦𝐛𝐞𝐫𝐬 𝐍𝐡𝐢 𝐌𝐢𝐥𝐚 𝐏𝐚𝐢𝐫 𝐊 𝐋𝐢𝐞!\n≿━━━━༺❀༻━━━━≾", threadID, messageID);
       }
 
       let oppositeGenderMembers = [];
@@ -178,7 +178,7 @@ module.exports.run = async ({ api, event, Users }) => {
 
     api.sendMessage(
       {
-        body: `≿━━━━༺💝༻━━━━≾\n\n${randomMsg}\n\n👤 ${nameOne}\n💕 𝐏𝐀𝐈𝐑𝐄𝐃 𝐖𝐈𝐓𝐇 💕\n👤 ${nameTwo}\n\n≿━━━━༺💝༻━━━━≾`,
+        body:.  `≿━━━━༺𝐎𝐖𝐍𝐄𝐑 ༻━━━━≾\n\n${randomMsg}\n\n👤 ${nameOne}\n💕 𝐏𝐀𝐈𝐑𝐄𝐃 𝐖𝐈𝐓𝐇 💕\n👤 ${nameTwo}\n\n≿━━━━༺𝐒𝐇𝐀𝐀𝐍༻━━━━≾`,
         attachment: fs.createReadStream(outputPath),
         mentions: [
           { tag: nameOne, id: one },
